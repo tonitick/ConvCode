@@ -1,8 +1,19 @@
+#ifndef __CCONVCODEC_H__
+#define __CCONVCODEC_H__
+
 class CConvCodec {
  public:
     CConvCodec();
     virtual ~CConvCodec();
-    
+
+    void malloc(int len_uu, int code_no, const char *file_name);
+    void free();
+    void encoder(int *uu, int *cc);
+    void softInHardOut(double *in_bit_probs, int *uu_hat);
+
+    void printInfo();
+ 
+ private:   
     //convolution code info
     int m_codedim;
     int m_codelen;
@@ -30,9 +41,10 @@ class CConvCodec {
     double **m_alpha;
     double **m_beta;
     double **m_gamma;
-    
-    void Malloc(int len_uu, int code_no, char *file_name);
-    void Free();
-    void Encoder(int *uu, int *cc);
-    void SoftInHardOut(double *in_bit_probs, int *uu_hat);
+
+    void getAlpha(double *in_bit_probs);
+    void getBeta(double *in_bit_probs);
+    void getGamma(double *in_bit_probs, int index);
 };
+
+#endif

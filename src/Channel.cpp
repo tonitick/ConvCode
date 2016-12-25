@@ -10,7 +10,7 @@ Channel::Channel(Noise * noi, int cap) {
 }
 
 Channel::~Channel() {
-	delete[] signal;
+	delete []signal;
 }
 
 bool Channel::send(const double* info_seq, int n) {
@@ -21,13 +21,15 @@ bool Channel::send(const double* info_seq, int n) {
 	
 	double* noise_data = new double[n];
 	noise -> generateNoise(noise_data, n);
-	for(int i = 0; i < n; i++) 
+	for(int i = 0; i < n; i++) {
 		signal[i] = info_seq[i] + noise_data[i];
-	
-	delete noise_data;
+	}
+
+	delete []noise_data;
 	
 	could_receive = true;
 	could_send = false;
+	
 	return true;
 }
 

@@ -13,7 +13,7 @@ public:
 	WhiteGaussianNoise(double mu, double sigma);
 	virtual void generateNoise(double* noise_data, int n);
 private:
-	CLCRandNum generator;
+	CWHRandNum generator;
 	double mean;
 	double deviation;
 };
