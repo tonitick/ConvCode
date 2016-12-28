@@ -16,6 +16,20 @@ private:
 	unsigned carrying;
 	double *signal;
 	Noise *noise;
+
+	void printSeq(int* seq, int n) {
+        for(int i = 0; i < n; i++) {
+            printf("%d ", seq[i]);
+        }
+        printf("\n");
+    }
+
+    void printSeq2(double* seq, int n) {
+        for(int i = 0; i < n; i++) {
+            printf("%lf ", seq[i]);
+        }
+        printf("\n");
+    }
 };
 
 #endif

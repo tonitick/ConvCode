@@ -21,6 +21,7 @@ bool Channel::send(const double* info_seq, int n) {
 	
 	double* noise_data = new double[n];
 	noise -> generateNoise(noise_data, n);
+
 	for(int i = 0; i < n; i++) {
 		signal[i] = info_seq[i] + noise_data[i];
 	}

@@ -1,6 +1,8 @@
 #ifndef __CCONVCODEC_H__
 #define __CCONVCODEC_H__
 
+#include <stdio.h>
+
 class CConvCodec {
  public:
     CConvCodec();
@@ -45,6 +47,30 @@ class CConvCodec {
     void getAlpha(double *in_bit_probs);
     void getBeta(double *in_bit_probs);
     void getGamma(double *in_bit_probs, int index);
+
+
+    void printSeq(int* seq, int n) {
+        for(int i = 0; i < n; i++) {
+            printf("%d ", seq[i]);
+        }
+        printf("\n");
+    }
+
+    void printSeq2(double* seq, int n) {
+        for(int i = 0; i < n; i++) {
+            printf("%lf ", seq[i]);
+        }
+        printf("\n");
+    }
+
+    void print2D(double** mat, int m, int n) {
+        for(int i = 0; i < m; i++) {
+            for(int j = 0; j < n; j++) {
+                printf("%.10lf ", mat[i][j]);
+            }
+            printf("\n");
+        }
+    }
 };
 
 #endif
