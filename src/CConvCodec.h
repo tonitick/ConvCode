@@ -47,6 +47,7 @@ class CConvCodec {
     void getAlpha(double *in_bit_probs);
     void getBeta(double *in_bit_probs);
     void getGamma(double *in_bit_probs, int index);
+    double maxStar(double a, double b);
 
 
     void printSeq(int* seq, int n) {

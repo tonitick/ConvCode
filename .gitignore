@@ -1,2 +1,7 @@
-# ignore the test input file
+# ignore the test input files
 test_sample
+
+# ignore object files and executable files
+*.o
+*.out
+*.exe

@@ -34,7 +34,7 @@ double errorRate(int* original, int* decoded, int n) {
 }
 
 
-#define uu_len 500
+#define uu_len 1000
 int main() {
 	srand((unsigned)time(NULL));
 	// CWHRandNum generator;
@@ -71,6 +71,8 @@ int main() {
 	//calculate prob
 	double* prob = new double[2 * uu_len];
 	for(int i = 0; i < 2 * uu_len; i++) {
+		//prob[2 * i] = exp(- (1.0 / 2.0) * (rec[i] - 1.0) * (rec[i] - 1.0));
+		//prob[2 * i + 1] = exp(- (1.0 / 2.0) * (rec[i] + 1.0) * (rec[i] + 1.0));
 		prob[i] = 1.0 / (1.0 + exp(-2.0 * rec[i] / 1));
 	}
 	//printf("prob:\n");
