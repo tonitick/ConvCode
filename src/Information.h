@@ -5,7 +5,7 @@
 
 class Information {
  private:
-    CLCRandNum generator;
+    CWHRandNum generator;
 
  public:
  	void generateInfoSeq(int* info_seq, int n);

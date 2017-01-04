@@ -1,90 +1,32 @@
-#include "Information.h"
-#include "Noise.h"
-#include "Channel.h"
-#include "CConvCodec.h"
-#include "RandNum.h"
+#include "Runner.h"
 #include <stdio.h>
-#include <math.h>
-#include <time.h>
-#include <stdlib.h>
 
-void printSeq(int* seq, int n) {
-	for(int i = 0; i < n; i++) {
-		printf("%d ", seq[i]);
-	}
-	printf("\n");
-}
-
-void printSeq2(double* seq, int n) {
-	for(int i = 0; i < n; i++) {
-		printf("%lf ", seq[i]);
-	}
-	printf("\n");
-}
-
-double errorRate(int* original, int* decoded, int n) {
-	int sum = 0;
-	for(int i = 0; i < n; i++) {
-		if(original[i] != decoded[i]) {
-			sum++;
-		}
-	}
-
-	return (double)sum / (double) n; 
-}
-
-
-#define uu_len 1000
 int main() {
-	srand((unsigned)time(NULL));
-	// CWHRandNum generator;
-	// double test[10];
-	// generator.Normal(test, 10);
-	// printSeq2(test, 10);
-	Information ii;
-	WhiteGaussianNoise wn(0, 1);
-	Channel AGWN(&wn);
-	CConvCodec conv;
-	conv.malloc(uu_len, 1, "../test_sample/sample1.txt");
-	//conv.printInfo();
-	//generate information sequence
-	int* info_seq = new int[uu_len];
-	ii.generateInfoSeq(info_seq, uu_len);
-	//printSeq(info_seq, uu_len);
-	
-	//encode
-	int* coded_seq = new int[2 * uu_len];
-	conv.encoder(info_seq, coded_seq);
-	//printSeq(coded_seq, 2 * uu_len);
-	
-	//modulate
-	double* modulated_seq = new double[2 * uu_len];
-	ii.modulateInfo(modulated_seq, coded_seq, 2 * uu_len);
-	//printSeq2(modulated_seq, 2 * uu_len);
+	printf("please intput filepath(eg. ../test_sample/sample1.txt): \n");
+	char* path;
+	path = new char[100];
+	scanf("%s", path);
 
-	//sent and receive
-	AGWN.send(modulated_seq, 2 * uu_len);
-	double* rec = new double[2 * uu_len];
-	AGWN.receive(rec, 2 * uu_len);
-	//printSeq2(rec, 2 * uu_len);
+	printf("please intput total information length(eg. 100000): \n");
+	int total_len;
+	scanf("%d", &total_len);
+
+	printf("please intput group length(eg. 1000): \n");
+	int group_len;
+	scanf("%d", &group_len);
+
+	printf("please intput Es(eg. 1.0): \n");
+	double Es;
+	scanf("%lf", &Es);
+
+	printf("please intput deviation of Gaussian noise(eg. 0.5): \n");
+	double dev;
+	scanf("%lf", &dev);
 	
-	//calculate prob
-	double* prob = new double[2 * uu_len];
-	for(int i = 0; i < 2 * uu_len; i++) {
-		//prob[2 * i] = exp(- (1.0 / 2.0) * (rec[i] - 1.0) * (rec[i] - 1.0));
-		//prob[2 * i + 1] = exp(- (1.0 / 2.0) * (rec[i] + 1.0) * (rec[i] + 1.0));
-		prob[i] = 1.0 / (1.0 + exp(-2.0 * rec[i] / 1));
-	}
-	//printf("prob:\n");
-	//printSeq2(prob, 2 * uu_len);
+	Runner myRunner(total_len, group_len, Es, dev, path);
+	myRunner.process();
 
-	//decode
-	int* decoded = new int[uu_len];
-	conv.softInHardOut(prob, decoded);
-	//printSeq(decoded, uu_len);
-
-	//error rate
-	printf("%lf\n", errorRate(info_seq, decoded, uu_len));
+	delete []path;
 
 	return 0;
 }

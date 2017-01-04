@@ -1,5 +1,6 @@
 #include "Channel.h" 
 #include <string.h>
+#include <stdio.h>
 Channel::Channel(Noise * noi, int cap) {
 	noise = noi;
 	capacity = cap;
@@ -21,11 +22,11 @@ bool Channel::send(const double* info_seq, int n) {
 	
 	double* noise_data = new double[n];
 	noise -> generateNoise(noise_data, n);
-
+	
 	for(int i = 0; i < n; i++) {
 		signal[i] = info_seq[i] + noise_data[i];
 	}
-
+	
 	delete []noise_data;
 	
 	could_receive = true;

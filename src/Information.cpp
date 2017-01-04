@@ -1,6 +1,7 @@
 #include "Information.h"
 
 void Information::generateInfoSeq(int* info_seq, int n) {
+	generator.SetSeed(0);
 	for(int i = 0; i < n; i++) {
 		if(generator.Uniform() < 0.5)
 			info_seq[i] = 0;

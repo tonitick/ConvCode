@@ -8,10 +8,11 @@ class CConvCodec {
     CConvCodec();
     virtual ~CConvCodec();
 
-    void malloc(int len_uu, int code_no, const char *file_name);
+    void malloc(int len_uu, int code_no, char *file_name);
     void free();
     void encoder(int *uu, int *cc);
     void softInHardOut(double *in_bit_probs, int *uu_hat);
+    void softInHardOut2(double *yy, double Es, double N0, int *uu_hat);
 
     void printInfo();
  
@@ -44,34 +45,17 @@ class CConvCodec {
     double **m_beta;
     double **m_gamma;
 
+    //two methods
     void getAlpha(double *in_bit_probs);
+    void getAlpha2(double *yy, double Es, double N0);
+    
     void getBeta(double *in_bit_probs);
+    void getBeta2(double *yy, double Es, double N0);
+    
     void getGamma(double *in_bit_probs, int index);
+    void getGamma2(double *yy, int index, double Es, double N0);
+    
     double maxStar(double a, double b);
-
-
-    void printSeq(int* seq, int n) {
-        for(int i = 0; i < n; i++) {
-            printf("%d ", seq[i]);
-        }
-        printf("\n");
-    }
-
-    void printSeq2(double* seq, int n) {
-        for(int i = 0; i < n; i++) {
-            printf("%lf ", seq[i]);
-        }
-        printf("\n");
-    }
-
-    void print2D(double** mat, int m, int n) {
-        for(int i = 0; i < m; i++) {
-            for(int j = 0; j < n; j++) {
-                printf("%.10lf ", mat[i][j]);
-            }
-            printf("\n");
-        }
-    }
 };
 
 #endif

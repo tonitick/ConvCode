@@ -34,14 +34,14 @@ CConvCodec::~CConvCodec() {
 	free();
 }
 
-void CConvCodec::malloc(int len_uu, int code_no, const char *file_name) {
+void CConvCodec::malloc(int len_uu, int code_no, char* file_name) {
 	free();
 	
 	m_codedim = len_uu;
 	m_len_input = code_no;
 	FILE* fp;
 	fp = fopen(file_name, "r+");
-	fscanf(fp, "%d%d", &m_num_state, &m_len_output);
+	fscanf(fp, "%*d%d%d", &m_len_output, &m_num_state);
 	m_num_input = pow(2,m_len_input);
 	m_num_output = pow(2,m_len_output);
 	m_num_edge = m_num_state * m_num_input;
@@ -74,6 +74,8 @@ void CConvCodec::malloc(int len_uu, int code_no, const char *file_name) {
 	for(int i = 0; i < m_num_state; i++) {
 		m_gamma[i] = new double[m_num_state];
 	}
+
+	fclose(fp);
 }
 
 void CConvCodec::free() {
@@ -155,11 +157,6 @@ void CConvCodec::softInHardOut(double *in_bit_probs, int *uu_hat) {
 	//preliminary work
 	getAlpha(in_bit_probs);
 	getBeta(in_bit_probs);
-
-	// printf("alpha:\n");
-	// print2D(m_alpha, m_len_trellis + 1, m_num_state);
-	// printf("beta:\n");
-	// print2D(m_beta, m_len_trellis + 1, m_num_state);
 	
 	//decoding
 	for(int i = 0; i < m_len_trellis; i++) {
@@ -189,8 +186,56 @@ void CConvCodec::softInHardOut(double *in_bit_probs, int *uu_hat) {
 			}
 		}
 		
-		// printf("prob %d: ", i);
-		// printSeq2(prob, m_num_input);
+		//get decoded element
+		int dec = -1;
+		double max_prob = -DBL_MAX;
+		for(int j = 0; j < m_num_input; j++) {
+			if(prob[j] > max_prob) {
+				dec = j;
+				max_prob = prob[j];
+			}
+		}
+		for(int j = 0; j < m_len_input; j++) {
+			uu_hat[i * m_len_input + j] = dec % 2;
+			dec = dec / 2;
+		}
+
+		delete []prob;
+	}
+}
+
+void CConvCodec::softInHardOut2(double *yy, double Es, double N0, int *uu_hat) {
+	//preliminary work
+	getAlpha2(yy, Es, N0);
+	getBeta2(yy, Es, N0);
+	
+	//decoding
+	for(int i = 0; i < m_len_trellis; i++) {
+		getGamma2(yy, i, Es, N0);
+
+		//calculate the probability of all input respectively
+		double* prob = new double[m_num_input];
+		for(int set_zero = 0; set_zero < m_num_input; set_zero++) {
+			prob[set_zero] = -DBL_MAX; //log(0)
+		}
+		
+		for(int j = 0; j < m_num_edge; j++) {
+			if(m_alpha[i][m_left_vertex[j]] == -DBL_MAX ||
+			   m_beta[i + 1][m_right_vertex[j]] == -DBL_MAX ||
+			   m_gamma[m_left_vertex[j]][m_right_vertex[j]] == -DBL_MAX) {
+				continue;
+			}
+			else if(prob[m_in_label[j]] == -DBL_MAX) {
+				prob[m_in_label[j]] = m_alpha[i][m_left_vertex[j]] + 
+			                          m_beta[i + 1][m_right_vertex[j]] + 
+			                          m_gamma[m_left_vertex[j]][m_right_vertex[j]];
+			}
+			else {
+				prob[m_in_label[j]] = maxStar(prob[m_in_label[j]], m_alpha[i][m_left_vertex[j]] +
+					                                               m_beta[i + 1][m_right_vertex[j]] + 
+					                                               m_gamma[m_left_vertex[j]][m_right_vertex[j]]);
+			}
+		}
 		
 		//get decoded element
 		int dec = -1;
@@ -220,9 +265,37 @@ void CConvCodec::getAlpha(double *in_bit_probs) {
 	for(int forward = 1; forward < m_len_trellis + 1; forward++) {
 		//calculate gamma
 		getGamma(in_bit_probs, forward - 1);
-		// printf("gamma %d:\n", forward - 1);
-		// print2D(m_gamma, m_num_state, m_num_state);
+
 		//calculate alpha l
+		for(int i = 0; i < m_num_state; i++) {
+			m_alpha[forward][i] = -DBL_MAX; //log(0)
+			for(int j = 0; j < m_num_state; j++) {
+				if(m_alpha[forward - 1][j] == -DBL_MAX || m_gamma[j][i] == -DBL_MAX) {
+					continue;
+				}
+				else if(m_alpha[forward][i] == -DBL_MAX) {
+					m_alpha[forward][i] = m_alpha[forward - 1][j] + m_gamma[j][i];
+				}
+				else {
+					m_alpha[forward][i] = maxStar(m_alpha[forward][i], 
+						                          m_alpha[forward - 1][j] + m_gamma[j][i]);
+				}
+			}
+		}
+	}
+}
+
+void CConvCodec::getAlpha2(double *yy, double Es, double N0) {
+	//set marginal value
+	m_alpha[0][0] = 0; //log(1)
+	for(int i = 1; i < m_num_state; i++) {
+		m_alpha[0][i] = -DBL_MAX; //log(0)
+	}
+
+	for(int forward = 1; forward < m_len_trellis + 1; forward++) {
+		//calculate gamma
+		getGamma2(yy, forward - 1, Es, N0);
+
 		for(int i = 0; i < m_num_state; i++) {
 			m_alpha[forward][i] = -DBL_MAX; //log(0)
 			for(int j = 0; j < m_num_state; j++) {
@@ -270,6 +343,35 @@ void CConvCodec::getBeta(double *in_bit_probs) {
 	}
 }
 
+void CConvCodec::getBeta2(double *yy, double Es, double N0) {
+	//set marginal value
+	for(int i = 0; i < m_num_state; i++) {
+		m_beta[m_len_trellis][i] = 0; //log(1)
+	}
+
+	for(int backward = m_len_trellis - 1; backward >= 0; backward--) {
+		//calculate gamma
+		getGamma2(yy, backward, Es, N0);
+
+		//calculate beta l
+		for(int i = 0; i < m_num_state; i++) {
+			m_beta[backward][i] = -DBL_MAX; //log(0)
+			for(int j = 0; j < m_num_state; j++) {
+				if(m_beta[backward + 1][j] == -DBL_MAX || m_gamma[i][j] == -DBL_MAX) {
+					continue;
+				}
+				else if(m_beta[backward][i] == -DBL_MAX) {
+					m_beta[backward][i] = m_beta[backward + 1][j] + m_gamma[i][j];
+				}
+				else {
+					m_beta[backward][i] = maxStar(m_beta[backward][i], 
+						                          m_beta[backward + 1][j] + m_gamma[i][j]);
+				}
+			}
+		}
+	}
+}
+
 void CConvCodec::getGamma(double *in_bit_probs, int index) {
 	for(int i = 0; i < m_num_state; i++) {
 		for(int j = 0; j < m_num_state; j++) {
@@ -295,6 +397,31 @@ void CConvCodec::getGamma(double *in_bit_probs, int index) {
 	}	
 }
 
+void CConvCodec::getGamma2(double *yy, int index, double Es, double N0) {
+	for(int i = 0; i < m_num_state; i++) {
+		for(int j = 0; j < m_num_state; j++) {
+			int k;
+			for(k = 0; k < m_num_edge; k++) {
+				if(m_left_vertex[k] == i && m_right_vertex[k] == j) {
+					m_gamma[i][j] = 0.0;
+					int out_label = m_out_label[k];
+					for(int l = 0; l < m_len_output; l++) {
+						if(out_label % 2 == 0)
+							m_gamma[i][j] = m_gamma[i][j] + 2 * Es / N0 * yy[index * m_len_output + l];
+						else
+							m_gamma[i][j] = m_gamma[i][j] - 2 * Es / N0 * yy[index * m_len_output + l];
+
+						out_label = out_label / 2;
+					}
+					break;
+				}
+			}
+			if(k == m_num_edge)
+				m_gamma[i][j] = -DBL_MAX; //log(0)
+		}
+	}	
+}
+
 double CConvCodec::maxStar(double a, double b) {
 	double max;
 	if(a > b)
@@ -302,7 +429,7 @@ double CConvCodec::maxStar(double a, double b) {
 	else
 		max = b;
 
-	return max + log(1 + exp(-abs(a - b)));
+	return max + log(1 + exp(-fabs(a - b)));
 }
 
 void CConvCodec::printInfo() {

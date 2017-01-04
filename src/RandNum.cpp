@@ -278,8 +278,7 @@ double CWHRandNum::Uniform()
 	Z = 170 * Z % 30323;
 
 	U = X / 30269.0 + Y / 30307.0 + Z / 30323.0;
-	U = U - int(U);
-
+	U = fabs(U - int(U));
     return U;
 }
 
